@@ -1,0 +1,112 @@
+Database Migration
+          
+  		"i-09e4f934cb47235e7",
+           "t3.small",
+            "ec2-54-190-27-102.us-west-2.compute.amazonaws.com",
+            "54.190.27.102",
+            "us-west-2a",
+            "vpc-063448153003ca297", 
+            "sg-0d3f8dce7d24e6d27"
+
+
+aws ec2 describe-vpcs --vpc-ids vpc-063448153003ca297 \
+--filters "Name=tag:Name,Values= Cafe VPC" \
+--query "Vpcs[*].CidrBlock"
+
+CIDR BLOCK "10.200.0.0/20"
+Cafe VPC IPv4 CIDR block: 10.200.0.0/20
+
+aws ec2 describe-subnets \
+--filters "Name=vpc-id,Values=vpc-063448153003ca297" \
+--query "Subnets[*].[SubnetId,CidrBlock]"
+
+Cafe Public Subnet 1 Subnet ID: subnet-02b2fa2bb13a7555d
+Cafe Public Subnet 1 IPv4 CIDR block: 10.200.0.0/24
+
+aws ec2 describe-availability-zones \
+--filters "Name=region-name,Values=us-west-2" \
+--query "AvailabilityZones[*].ZoneName"
+
+List of Availability Zones in the region: us-west-2a, us-west-2b, and us-west-2c, us-west-2d
+
+
+Number of orders: 03
+
+***************************
+
+aws ec2 create-security-group \
+--group-name CafeDatabaseSG \
+--description "Security group for Cafe database" \
+--vpc-id vpc-063448153003ca297
+
+"GroupId": "sg-0d4173b400372ff0e"
+
+aws ec2 authorize-security-group-ingress \
+--group-id sg-0d4173b400372ff0e \
+--protocol tcp --port 3306 \
+--source-group sg-0d3f8dce7d24e6d27
+
+aws ec2 create-subnet \
+--vpc-id vpc-063448153003ca297 \
+--cidr-block 10.200.2.0/23 \
+--availability-zone us-west-2a
+
+Cafe Private Subnet 1 ID:  "subnet-0c8f5bc5e3211405d"
+
+aws ec2 create-subnet \
+--vpc-id vpc-063448153003ca297 \
+--cidr-block 10.200.10.0/23 \
+--availability-zone us-west-2b
+
+Cafe Private Subnet 2 ID: subnet-0ef99fdfdf7656af1
+
+aws rds create-db-subnet-group \
+--db-subnet-group-name "CafeDB Subnet Group" \
+--db-subnet-group-description "DB subnet group for Cafe" \
+--subnet-ids subnet-0c8f5bc5e3211405d subnet-0ef99fdfdf7656af1 \
+--tags "Key=Name,Value= CafeDatabaseSubnetGroup"
+
+"DBSubnetGroupArn": "arn:aws:rds:us-west-2:527467684490:subgrp:cafedb subnet group",
+ "DBSubnetGroupName": "cafedb subnet group"
+
+*************************
+
+
+aws rds create-db-instance \
+--db-instance-identifier CafeDBInstance \
+--engine mariadb \
+--engine-version 10.5.13 \
+--db-instance-class db.t3.micro \
+--allocated-storage 20 \
+--availability-zone us-west-2a \
+--db-subnet-group-name "CafeDB Subnet Group" \
+--vpc-security-group-ids sg-0d4173b400372ff0e \
+--no-publicly-accessible \
+--master-username root --master-user-password 'Re:Start!9'
+
+
+
+46.
+aws rds describe-db-instances \
+--db-instance-identifier CafeDBInstance \
+--query "DBInstances[*].[Endpoint.Address,AvailabilityZone,PreferredBackupWindow,BackupRetentionPeriod,DBInstanceStatus]"
+
+
+47. "cafedbinstance.crou3fhf8os6.us-west-2.rds.amazonaws.com"
+
+
+mysql --user=root --password='Re:Start!9' \
+--host=cafedbinstance.crou3fhf8os6.us-west-2.rds.amazonaws.com \
+< cafedb-backup.sql
+
+mysql --user=root --password='Re:Start!9' \
+--host=cafedbinstance.crou3fhf8os6.us-west-2.rds.amazonaws.com  \
+cafe_db
+
+
+mysql --user=root --password='Re:Start!9' \
+--host=cafedbinstance.crou3fhf8os6.us-west-2.rds.amazonaws.com \
+cafe_db
+
+
+
